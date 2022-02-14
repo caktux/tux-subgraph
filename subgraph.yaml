@@ -1,0 +1,59 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Auctions
+    network: mainnet
+    source:
+      address: "0x06d3E950fE4CeD87c7b24e8336B8688CE2c0Ca9c"
+      abi: Auctions
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - AccountUpdated
+        - AuctionApprovalUpdated
+        - AuctionBid
+        - AuctionCanceled
+        - AuctionCreated
+        - AuctionDurationExtended
+        - AuctionEnded
+        - AuctionReservePriceUpdated
+        - CreatorAdded
+        - CreatorRemoved
+        - FeeUpdated
+        - HouseCreated
+        - MetadataUpdated
+      abis:
+        - name: Auctions
+          file: ./abis/Auctions.json
+      eventHandlers:
+        - event: AccountUpdated(indexed address)
+          handler: handleAccountUpdated
+        - event: AuctionApprovalUpdated(indexed uint256,bool)
+          handler: handleAuctionApprovalUpdated
+        - event: AuctionBid(indexed uint256,indexed address,uint256,bool,bool)
+          handler: handleAuctionBid
+        - event: AuctionCanceled(indexed uint256)
+          handler: handleAuctionCanceled
+        - event: AuctionCreated(indexed uint256)
+          handler: handleAuctionCreated
+        - event: AuctionDurationExtended(indexed uint256,uint256)
+          handler: handleAuctionDurationExtended
+        - event: AuctionEnded(indexed uint256)
+          handler: handleAuctionEnded
+        - event: AuctionReservePriceUpdated(indexed uint256,uint256)
+          handler: handleAuctionReservePriceUpdated
+        - event: CreatorAdded(indexed uint256,indexed address)
+          handler: handleCreatorAdded
+        - event: CreatorRemoved(indexed uint256,indexed address)
+          handler: handleCreatorRemoved
+        - event: FeeUpdated(indexed uint256,uint16)
+          handler: handleFeeUpdated
+        - event: HouseCreated(indexed uint256)
+          handler: handleHouseCreated
+        - event: MetadataUpdated(indexed uint256,string)
+          handler: handleMetadataUpdated
+      file: ./src/mapping.ts
