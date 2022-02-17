@@ -1,5 +1,73 @@
-type ExampleEntity @entity {
+type Account @entity {
   id: ID!
-  count: BigInt!
-  owner: Bytes! # address
+  name: String
+  bioHash: String
+  pictureHash: String
+  bids: Int
+  bidsReceived: Int
+  sales: Int
+  bought: Int
+  totalSold: BigInt
+  totalBought: BigInt
+  isCreator: Boolean
+  bidding: [Auction!]!
+  biddingTotal: Int
+  selling: [Auction!]!
+  sellingTotal: Int
+}
+
+type Auction @entity {
+  id: ID!
+  intId: Int!
+  contract: Bytes!
+  tokenId: BigInt!
+  owner: Bytes!
+  duration: Int
+  reservePrice: BigInt
+  houseId: BigInt!
+  fee: Int
+  approved: Boolean
+  firstBidTime: BigInt
+  amount: BigInt!
+  bidder: Bytes!
+  created: BigInt
+  bids: Int
+}
+
+type Contract @entity {
+  id: ID!
+  address: Bytes!
+  name: String!
+  bids: Int
+  sales: Int
+  total: BigInt
+  lastUpdated: Int
+  totalAuctions: Int
+  auctions: [Auction!]!
+}
+
+type House @entity {
+  id: ID!
+  name: String!
+  curator: Bytes!
+  fee: Int
+  preApproved: Boolean
+  bids: Int
+  sales: Int
+  total: BigInt
+  feesTotal: BigInt
+  activeAuctions: Int
+  lastUpdated: Int
+  creators: [Account!]!
+  auctions: [Auction!]!
+}
+
+type Totals @entity {
+  id: ID!
+  houses: BigInt!
+  auctions: BigInt!
+  contracts: BigInt!
+  creators: BigInt!
+  collectors: BigInt!
+  active: [Auction!]!
 }
