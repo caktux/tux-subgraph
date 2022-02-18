@@ -35,6 +35,7 @@ export function handleAccountUpdated(event: AccountUpdated): void {
     entity.totalSold = BigInt.fromI32(0)
     entity.totalBought = BigInt.fromI32(0)
     entity.isCreator = false
+    entity.isCollector = false
     entity.bidding = []
     entity.biddingTotal = 0
     entity.selling = []
@@ -192,6 +193,17 @@ export function handleAuctionBid(event: AuctionBid): void {
   if (!auction)
     return
 
+  let totals = Totals.load('1')
+  if (!totals)
+    return
+
+  let owner = Account.load(auction.owner.toHexString())
+  if (!owner)
+    return
+
+  owner.bidsReceived += 1
+  owner.save()
+
   let bidder = Account.load(event.transaction.from.toHexString())
   if (!bidder) {
     bidder = new Account(event.transaction.from.toHexString())
@@ -202,40 +214,41 @@ export function handleAuctionBid(event: AuctionBid): void {
     bidder.totalSold = BigInt.fromI32(0)
     bidder.totalBought = BigInt.fromI32(0)
     bidder.isCreator = false
+    bidder.isCollector = false
     bidder.biddingTotal = 0
     bidder.bidding = []
     bidder.sellingTotal = 0
     bidder.selling = []
   }
 
-  let owner = Account.load(auction.owner.toHexString())
-  if (!owner) {
-    owner = new Account(auction.owner.toHexString())
-    owner.bids = 0
-    owner.bidsReceived = 0
-    owner.sales = 0
-    owner.bought = 0
-    owner.totalSold = BigInt.fromI32(0)
-    owner.totalBought = BigInt.fromI32(0)
-    owner.isCreator = false
-    owner.biddingTotal = 0
-    owner.bidding = []
-    owner.sellingTotal = 0
-    owner.selling = []
-  }
-
   let activeAuctions = bidder.bidding
   if (!activeAuctions)
     activeAuctions = []
+
   if (activeAuctions.indexOf(auction.id) === -1) {
     activeAuctions.push(auction.id)
     bidder.bidding = activeAuctions
     bidder.biddingTotal += 1
   }
 
+  bidder.bids += 1
+
+  if (!bidder.isCollector) {
+    bidder.isCollector = true
+    totals.collectors += BigInt.fromI32(1)
+    totals.save()
+  }
+
+  bidder.save()
+
+  if (event.params.firstBid)
+    auction.firstBidTime = event.block.timestamp
+
   auction.bidder = event.params.bidder
   auction.amount = event.params.value
   auction.bids += 1
+
+  auction.save()
 
   let house = House.load(auction.houseId.toString())
   if (house) {
@@ -244,19 +257,10 @@ export function handleAuctionBid(event: AuctionBid): void {
     house.save()
   }
 
-  if (event.params.firstBid)
-    auction.firstBidTime = event.block.timestamp
-
-  bidder.bids += 1
-  owner.bidsReceived += 1
-
-  auction.save()
-  bidder.save()
-  owner.save()
-
   let tokenContract = Contract.load(auction.contract.toHexString())
   if (!tokenContract)
     return
+
   tokenContract.lastUpdated = event.block.timestamp.toI32()
   tokenContract.bids += 1
   tokenContract.save()
@@ -314,6 +318,9 @@ export function handleAuctionCanceled(event: AuctionCanceled): void {
     }
   }
 
+  auction.approved = false
+  auction.save()
+
   let tokenContract = Contract.load(auction.contract.toHexString())
   if (!tokenContract)
     return
@@ -326,9 +333,6 @@ export function handleAuctionCanceled(event: AuctionCanceled): void {
   if (tokenContract.totalAuctions === 0)
     totals.contracts -= BigInt.fromI32(1)
 
-  auction.approved = false
-
-  auction.save()
   totals.save()
 }
 
@@ -442,7 +446,6 @@ export function handleAuctionCreated(event: AuctionCreated): void {
     totals.contracts += BigInt.fromI32(1)
   }
 
-  tokenContract = Contract.load(entity.contract.toHexString())
   if (tokenContract && entity.approved) {
     let contractAuctions = tokenContract.auctions
     contractAuctions.push(entity.id)
@@ -480,11 +483,11 @@ export function handleAuctionEnded(event: AuctionEnded): void {
   if (!owner)
     return
 
-  let house = House.load(auction.houseId.toString())
-
   let totals = Totals.load('1')
   if (!totals)
     return
+
+  let house = House.load(auction.houseId.toString())
 
   bidder.bought += 1
   bidder.totalBought += auction.amount

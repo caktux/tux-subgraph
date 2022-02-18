@@ -10,6 +10,7 @@ type Account @entity {
   totalSold: BigInt
   totalBought: BigInt
   isCreator: Boolean
+  isCollector: Boolean
   bidding: [Auction!]!
   biddingTotal: Int
   selling: [Auction!]!
