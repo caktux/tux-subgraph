@@ -408,6 +408,10 @@ export function handleAuctionCreated(event: AuctionCreated): void {
       activeAuctions = []
     activeAuctions.push(entity.id)
     house.auctions = activeAuctions
+
+    if (house.lastUpdated === 0)
+      totals.houses += BigInt.fromI32(1)
+
     house.lastUpdated = event.block.timestamp.toI32()
 
     house.save()
@@ -619,19 +623,6 @@ export function handleHouseCreated(event: HouseCreated): void {
   entity.lastUpdated = 0
   entity.auctions = []
   entity.save()
-
-  let totals = Totals.load('1')
-  if (!totals) {
-    totals = new Totals('1')
-    totals.creators = BigInt.fromI32(0)
-    totals.collectors = BigInt.fromI32(0)
-    totals.contracts = BigInt.fromI32(0)
-    totals.auctions = BigInt.fromI32(0)
-    totals.houses = BigInt.fromI32(0)
-    totals.active = []
-  }
-  totals.houses += BigInt.fromI32(1)
-  totals.save()
 }
 
 export function handleMetadataUpdated(event: MetadataUpdated): void {}
