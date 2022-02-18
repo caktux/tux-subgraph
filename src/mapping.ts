@@ -286,11 +286,6 @@ export function handleAuctionCanceled(event: AuctionCanceled): void {
     owner.sellingTotal -= 1
   }
 
-  if (owner.sellingTotal === 0) {
-    owner.isCreator = false
-    totals.creators -= BigInt.fromI32(1)
-  }
-
   owner.save()
 
   let house = House.load(auction.houseId.toString())
@@ -508,11 +503,6 @@ export function handleAuctionEnded(event: AuctionEnded): void {
     ownerAuctions.splice(ownerAuctions.indexOf(auction.id), 1)
     owner.selling = ownerAuctions
     owner.sellingTotal -= 1
-  }
-
-  if (owner.sellingTotal === 0) {
-    owner.isCreator = false
-    totals.creators -= BigInt.fromI32(1)
   }
 
   owner.save()
