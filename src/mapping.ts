@@ -280,8 +280,14 @@ export function handleAuctionCanceled(event: AuctionCanceled): void {
     activeAuctions.splice(activeAuctions.indexOf(auction.id.toString()), 1)
     owner.selling = activeAuctions
     owner.sellingTotal -= 1
-    owner.save()
   }
+
+  if (owner.sellingTotal === 0) {
+    owner.isCreator = false
+    totals.creators -= BigInt.fromI32(1)
+  }
+
+  owner.save()
 
   let house = House.load(auction.houseId.toString())
 
@@ -305,11 +311,6 @@ export function handleAuctionCanceled(event: AuctionCanceled): void {
         activeAuctions = []
       activeAuctions.splice(activeAuctions.indexOf(auction.id), 1)
       totals.active = activeAuctions
-    }
-
-    if (owner.sellingTotal === 0) {
-      owner.isCreator = false
-      totals.creators -= BigInt.fromI32(1)
     }
   }
 
@@ -391,6 +392,13 @@ export function handleAuctionCreated(event: AuctionCreated): void {
   owner.selling = activeAuctions
   owner.sellingTotal += 1
 
+  if (!owner.isCreator) {
+    owner.isCreator = true
+    totals.creators += BigInt.fromI32(1)
+  }
+
+  owner.save()
+
   let house = House.load(entity.houseId.toString())
 
   if (house && entity.approved && entity.houseId > BigInt.fromI32(0)) {
@@ -415,14 +423,7 @@ export function handleAuctionCreated(event: AuctionCreated): void {
       activeAuctions.push(entity.id)
       totals.active = activeAuctions
     }
-
-    if (!owner.isCreator) {
-      owner.isCreator = true
-      totals.creators += BigInt.fromI32(1)
-    }
   }
-
-  owner.save()
 
   let tokenContract = Contract.load(entity.contract.toHexString())
   let registered = contract.contracts(auction.value0)
@@ -497,12 +498,21 @@ export function handleAuctionEnded(event: AuctionEnded): void {
     bidder.biddingTotal -= 1
   }
 
+  bidder.save()
+
   let ownerAuctions = owner.selling
   if (ownerAuctions.indexOf(auction.id) > -1) {
     ownerAuctions.splice(ownerAuctions.indexOf(auction.id), 1)
     owner.selling = ownerAuctions
     owner.sellingTotal -= 1
   }
+
+  if (owner.sellingTotal === 0) {
+    owner.isCreator = false
+    totals.creators -= BigInt.fromI32(1)
+  }
+
+  owner.save()
 
   if (house && auction.houseId > BigInt.fromI32(0)) {
     house.sales += 1
@@ -526,15 +536,7 @@ export function handleAuctionEnded(event: AuctionEnded): void {
       activeAuctions.splice(activeAuctions.indexOf(auction.id), 1)
       totals.active = activeAuctions
     }
-
-    if (owner.sellingTotal === 0) {
-      owner.isCreator = false
-      totals.creators -= BigInt.fromI32(1)
-    }
   }
-
-  bidder.save()
-  owner.save()
 
   let tokenContract = Contract.load(auction.contract.toHexString())
   if (!tokenContract)
